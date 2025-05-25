@@ -16,4 +16,5 @@ urllib3==1.26.15
 cryptography==3.4.7
 pyOpenSSL==20.0.1
 fuzzywuzzy==0.18.0
-python-Levenshtein==0.21.1 
+python-Levenshtein==0.21.1
+google-generativeai==0.3.2 
