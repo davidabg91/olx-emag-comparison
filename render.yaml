@@ -3,9 +3,11 @@ services:
     name: olx-emag-comparison
     env: python
     buildCommand: chmod +x build.sh && ./build.sh
-    startCommand: gunicorn app:app
+    startCommand: gunicorn app:app --workers 1 --threads 2 --timeout 120
     envVars:
       - key: PYTHON_VERSION
-        value: 3.9.18
+        value: 3.8.16
       - key: PORT
-        value: 10000 
+        value: 10000
+      - key: PYTHONUNBUFFERED
+        value: "1" 
