@@ -301,12 +301,13 @@ def run_scraper_job():
     options.add_experimental_option('excludeSwitches', ['enable-logging'])
     options.add_experimental_option('excludeSwitches', ['enable-automation'])
     options.add_experimental_option('useAutomationExtension', False)
-    options.binary_location = '/usr/bin/google-chrome-stable'  # Променен път до Chrome
+    options.binary_location = '/usr/bin/google-chrome-stable'
 
     driver = None
     try:
         try:
-            driver = webdriver.Chrome(options=options)  # Премахнато използването на webdriver_manager
+            service = Service('/usr/local/bin/chromedriver')
+            driver = webdriver.Chrome(service=service, options=options)
             logging.info("Selenium Chrome драйверът е стартиран успешно.")
         except Exception as e_driver:
             logging.critical(f"Неуспешно стартиране на Chrome драйвер: {e_driver}.")
