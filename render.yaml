@@ -28,9 +28,21 @@ services:
       echo "Проверка на PATH:"
       echo $PATH
     startCommand: |
+      echo "Стартиране на сървъра..."
+      echo "Проверка на променливите на средата:"
+      echo "CHROME_BIN: $CHROME_BIN"
+      echo "CHROMEDRIVER_PATH: $CHROMEDRIVER_PATH"
+      echo "PATH: $PATH"
+      echo "Проверка на файловете:"
+      ls -l /opt/chrome/
+      ls -l /usr/local/bin/
       export PATH="/opt/chrome:/usr/local/bin:$PATH"
       export CHROME_BIN="/opt/chrome/google-chrome"
       export CHROMEDRIVER_PATH="/opt/chrome/chromedriver"
+      echo "Проверка на променливите след експорт:"
+      echo "CHROME_BIN: $CHROME_BIN"
+      echo "CHROMEDRIVER_PATH: $CHROMEDRIVER_PATH"
+      echo "PATH: $PATH"
       gunicorn app:app
     envVars:
       - key: PYTHON_VERSION

@@ -170,6 +170,9 @@ def get_categories():
 def status():
     try:
         logging.info("Стартиране на скрапинг задача...")
+        logging.info(f"CHROME_BIN: {os.environ.get('CHROME_BIN')}")
+        logging.info(f"CHROMEDRIVER_PATH: {os.environ.get('CHROMEDRIVER_PATH')}")
+        logging.info(f"PATH: {os.environ.get('PATH')}")
         thread = threading.Thread(target=run_scraper_job)
         thread.daemon = True
         thread.start()
