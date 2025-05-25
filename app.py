@@ -166,6 +166,23 @@ def get_categories():
         logging.error(f"Грешка при извличане на категории: {e}")
         return jsonify({'error': 'Възникна грешка при извличане на категории'}), 500
 
+@app.route('/api/status')
+def get_status():
+    try:
+        with app.app_context():
+            last_offer = Offer.query.order_by(Offer.created_at.desc()).first()
+            total_offers = Offer.query.count()
+            
+            return jsonify({
+                'is_scraper_running': is_scraper_running,
+                'last_update': last_offer.created_at.isoformat() if last_offer else None,
+                'total_offers': total_offers,
+                'next_run': schedule.next_run().isoformat() if schedule.next_run() else None
+            })
+    except Exception as e:
+        logging.error(f"Грешка при проверка на статуса: {e}")
+        return jsonify({'error': 'Възникна грешка при проверка на статуса'}), 500
+
 if __name__ == '__main__':
     def signal_handler(signum, frame):
         logging.info("Получен сигнал за спиране. Изчакване на текущите задачи да приключат...")
