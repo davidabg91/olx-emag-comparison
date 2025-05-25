@@ -22,7 +22,14 @@ services:
       /opt/chrome/google-chrome --version
       echo "Проверка на ChromeDriver:"
       /opt/chrome/chromedriver --version
-    startCommand: gunicorn app:app
+      echo "Проверка на символните връзки:"
+      ls -l /usr/local/bin/chromedriver
+      ls -l /usr/local/bin/google-chrome
+      echo "Проверка на PATH:"
+      echo $PATH
+    startCommand: |
+      export PATH="/opt/chrome:/usr/local/bin:$PATH"
+      gunicorn app:app
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.0
