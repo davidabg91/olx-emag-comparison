@@ -1,61 +1,23 @@
 services:
   - type: web
-    name: olx-emag-comparison
+    name: olx-scraper
     env: python
     buildCommand: |
-      apt-get update && apt-get install -y wget unzip xvfb libxi6 libgconf-2-4
-      mkdir -p /opt/chrome
-      wget -q "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/114.0.5735.90/linux64/chrome-linux64.zip"
-      unzip chrome-linux64.zip
-      mv chrome-linux64/chrome /opt/chrome/google-chrome
-      chmod +x /opt/chrome/google-chrome
-      rm -rf chrome-linux64.zip chrome-linux64
-      wget -q "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/114.0.5735.90/linux64/chromedriver-linux64.zip"
-      unzip chromedriver-linux64.zip
-      mv chromedriver-linux64/chromedriver /opt/chrome/chromedriver
-      chmod +x /opt/chrome/chromedriver
-      rm -rf chromedriver-linux64.zip chromedriver-linux64
-      ln -s /opt/chrome/chromedriver /usr/local/bin/chromedriver
-      ln -s /opt/chrome/google-chrome /usr/local/bin/google-chrome
+      apt-get update
+      apt-get install -y wget gnupg
+      wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
+      echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list
+      apt-get update
+      apt-get install -y google-chrome-stable
+      CHROME_VERSION=$(google-chrome --version | awk '{print $3}' | cut -d'.' -f1)
+      wget -q "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION" -O - | xargs -I {} wget -q "https://chromedriver.storage.googleapis.com/{}/chromedriver_linux64.zip"
+      unzip chromedriver_linux64.zip
+      mv chromedriver /usr/local/bin/
+      chmod +x /usr/local/bin/chromedriver
       pip install -r requirements.txt
-      echo "Проверка на Chrome:"
-      /opt/chrome/google-chrome --version
-      echo "Проверка на ChromeDriver:"
-      /opt/chrome/chromedriver --version
-      echo "Проверка на символните връзки:"
-      ls -l /usr/local/bin/chromedriver
-      ls -l /usr/local/bin/google-chrome
-      echo "Проверка на PATH:"
-      echo $PATH
-    startCommand: |
-      echo "Стартиране на сървъра..."
-      echo "Проверка на променливите на средата:"
-      echo "CHROME_BIN: $CHROME_BIN"
-      echo "CHROMEDRIVER_PATH: $CHROMEDRIVER_PATH"
-      echo "PATH: $PATH"
-      echo "Проверка на файловете:"
-      ls -l /opt/chrome/
-      ls -l /usr/local/bin/
-      export PATH="/opt/chrome:/usr/local/bin:$PATH"
-      export CHROME_BIN="/opt/chrome/google-chrome"
-      export CHROMEDRIVER_PATH="/opt/chrome/chromedriver"
-      echo "Проверка на променливите след експорт:"
-      echo "CHROME_BIN: $CHROME_BIN"
-      echo "CHROMEDRIVER_PATH: $CHROMEDRIVER_PATH"
-      echo "PATH: $PATH"
-      gunicorn app:app
+    startCommand: gunicorn app:app
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.9.0
-      - key: PORT
-        value: 10000
-      - key: PYTHONUNBUFFERED
-        value: "1"
-      - key: PATH
-        value: "/opt/chrome:/usr/local/bin:$PATH"
-      - key: DISPLAY
-        value: ":99"
       - key: CHROME_BIN
-        value: "/opt/chrome/google-chrome"
+        value: /usr/bin/google-chrome
       - key: CHROMEDRIVER_PATH
-        value: "/opt/chrome/chromedriver" 
+        value: /usr/local/bin/chromedriver 
