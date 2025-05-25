@@ -301,13 +301,12 @@ def run_scraper_job():
     options.add_experimental_option('excludeSwitches', ['enable-logging'])
     options.add_experimental_option('excludeSwitches', ['enable-automation'])
     options.add_experimental_option('useAutomationExtension', False)
-    options.binary_location = '/usr/bin/google-chrome-stable'
+    options.binary_location = '/usr/local/bin/google-chrome'
 
     driver = None
     try:
         try:
-            from webdriver_manager.chrome import ChromeDriverManager
-            service = Service(ChromeDriverManager().install())
+            service = Service('/usr/local/bin/chromedriver')
             driver = webdriver.Chrome(service=service, options=options)
             logging.info("Selenium Chrome драйверът е стартиран успешно.")
         except Exception as e_driver:
