@@ -173,10 +173,27 @@ def status():
         logging.info(f"CHROME_BIN: {os.environ.get('CHROME_BIN')}")
         logging.info(f"CHROMEDRIVER_PATH: {os.environ.get('CHROMEDRIVER_PATH')}")
         logging.info(f"PATH: {os.environ.get('PATH')}")
-        thread = threading.Thread(target=run_scraper_job)
-        thread.daemon = True
-        thread.start()
-        return jsonify({"status": "success", "message": "Скрапинг задачата е стартирана"})
+        logging.info("Проверка на файловете:")
+        try:
+            import subprocess
+            chrome_bin = os.environ.get('CHROME_BIN', '/opt/chrome/google-chrome')
+            chromedriver_path = os.environ.get('CHROMEDRIVER_PATH', '/opt/chrome/chromedriver')
+            logging.info(f"Проверка на Chrome: {subprocess.check_output([chrome_bin, '--version']).decode()}")
+            logging.info(f"Проверка на ChromeDriver: {subprocess.check_output([chromedriver_path, '--version']).decode()}")
+        except Exception as e:
+            logging.error(f"Грешка при проверка на файловете: {e}")
+        
+        if not scraper_lock.acquire(blocking=False):
+            logging.warning("Скрапинг задачата вече се изпълнява. Пропускане.")
+            return jsonify({"status": "warning", "message": "Скрапинг задачата вече се изпълнява"})
+        
+        try:
+            thread = threading.Thread(target=run_scraper_job)
+            thread.daemon = True
+            thread.start()
+            return jsonify({"status": "success", "message": "Скрапинг задачата е стартирана"})
+        finally:
+            scraper_lock.release()
     except Exception as e:
         logging.error(f"Грешка при стартиране на скрапинг задачата: {e}")
         return jsonify({"status": "error", "message": str(e)})
