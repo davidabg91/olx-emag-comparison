@@ -11,6 +11,7 @@ from models import db, Offer
 import logging
 import sys
 import atexit
+import requests
 
 # Конфигурация на логването
 logging.basicConfig(
@@ -66,7 +67,23 @@ def run_scheduler():
             time.sleep(5)  # Пауза при грешка
 
 # Планиране на скрапинг задачата
-schedule.every(8).minutes.do(run_scraper_with_lock)
+schedule.every(15).minutes.do(run_scraper_with_lock)
+
+# Добавяме keep-alive функционалност
+def keep_alive():
+    while True:
+        try:
+            requests.get("https://olx-emag-comparison.onrender.com/")
+            logging.info("Keep-alive request sent")
+            time.sleep(300)  # 5 минути
+        except Exception as e:
+            logging.error(f"Keep-alive request failed: {e}")
+            time.sleep(60)  # 1 минута при грешка
+
+# Стартиране на keep-alive в отделна нишка
+keep_alive_thread = threading.Thread(target=keep_alive)
+keep_alive_thread.daemon = True
+keep_alive_thread.start()
 
 # Стартиране на планировчика в отделна нишка
 scheduler_thread = threading.Thread(target=run_scheduler)
