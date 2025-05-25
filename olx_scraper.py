@@ -301,19 +301,13 @@ def run_scraper_job():
     options.add_experimental_option('excludeSwitches', ['enable-logging'])
     options.add_experimental_option('excludeSwitches', ['enable-automation'])
     options.add_experimental_option('useAutomationExtension', False)
-    options.binary_location = '/usr/bin/google-chrome'  # Добавяме пътя до Chrome в Render
+    options.binary_location = '/usr/bin/google-chrome-stable'  # Променен път до Chrome
 
     driver = None
     try:
         try:
-            from webdriver_manager.chrome import ChromeDriverManager
-            s = Service(ChromeDriverManager().install())
-            driver = webdriver.Chrome(service=s, options=options)
-            logging.info("Selenium Chrome драйверът е стартиран успешно с webdriver_manager.")
-        except ImportError:
-            logging.warning("webdriver_manager не е инсталиран. Опит за PATH.")
-            driver = webdriver.Chrome(service=Service(), options=options)
-            logging.info("Selenium Chrome драйверът е стартиран (PATH).")
+            driver = webdriver.Chrome(options=options)  # Премахнато използването на webdriver_manager
+            logging.info("Selenium Chrome драйверът е стартиран успешно.")
         except Exception as e_driver:
             logging.critical(f"Неуспешно стартиране на Chrome драйвер: {e_driver}.")
             return
