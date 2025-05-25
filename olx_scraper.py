@@ -27,6 +27,7 @@ import threading
 from queue import Queue
 import signal
 import atexit
+from webdriver_manager.chrome import ChromeDriverManager
 
 # Списък с User Agents
 USER_AGENTS = [
@@ -259,7 +260,7 @@ def save_offer_to_db(title, price, olx_link, emag_price=None, emag_link=None, di
 # --- ГЛАВНА ФУНКЦИЯ ЗА СКРАНИРАНЕ ---
 def run_scraper_job():
     logging.info("--- Стартиране на задача за скрапинг ---")
-    options = webdriver.ChromeOptions()
+    options = Options()
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
@@ -301,13 +302,11 @@ def run_scraper_job():
     options.add_experimental_option('excludeSwitches', ['enable-logging'])
     options.add_experimental_option('excludeSwitches', ['enable-automation'])
     options.add_experimental_option('useAutomationExtension', False)
-    options.binary_location = os.environ.get('CHROME_BIN', '/opt/chrome/google-chrome')
 
     driver = None
     try:
         try:
-            chromedriver_path = os.environ.get('CHROMEDRIVER_PATH', '/opt/chrome/chromedriver')
-            service = Service(chromedriver_path)
+            service = Service(ChromeDriverManager().install())
             driver = webdriver.Chrome(service=service, options=options)
             logging.info("Selenium Chrome драйверът е стартиран успешно.")
         except Exception as e_driver:
