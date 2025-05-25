@@ -1,5 +1,6 @@
 flask==2.0.1
 flask-sqlalchemy==2.5.1
+sqlalchemy==1.4.23
 flask-cors==3.0.10
 selenium==4.1.0
 webdriver-manager==3.5.2
