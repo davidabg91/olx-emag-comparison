@@ -1,0 +1,159 @@
+from flask import Flask, render_template, jsonify, request
+from flask_cors import CORS
+import os
+from datetime import datetime
+import json
+from olx_scraper import run_scraper_job
+import threading
+import schedule
+import time
+from models import db, Offer
+import logging
+import sys
+import atexit
+
+# Конфигурация на логването
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('app.log', encoding='utf-8'),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+
+app = Flask(__name__)
+CORS(app)
+
+# Конфигурация на базата данни
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///offers.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db.init_app(app)
+
+# Създаване на базата данни
+with app.app_context():
+    db.create_all()
+
+# Заключване за предотвратяване на паралелно изпълнение
+scraper_lock = threading.Lock()
+is_scraper_running = False
+scraper_started = False  # Нова променлива за проследяване на стартирането
+
+def run_scraper_with_lock():
+    global is_scraper_running, scraper_started
+    if not scraper_lock.acquire(blocking=False):
+        logging.warning("Скрапинг задачата вече се изпълнява. Пропускане.")
+        return
+    
+    try:
+        is_scraper_running = True
+        logging.info("Стартиране на скрапинг задача...")
+        run_scraper_job()
+    except Exception as e:
+        logging.error(f"Грешка при изпълнение на скрапинг задача: {e}")
+    finally:
+        is_scraper_running = False
+        scraper_lock.release()
+        logging.info("Скрапинг задачата приключи.")
+
+def run_scheduler():
+    while True:
+        try:
+            schedule.run_pending()
+            time.sleep(1)
+        except Exception as e:
+            logging.error(f"Грешка в планировчика: {e}")
+            time.sleep(5)  # Пауза при грешка
+
+# Планиране на скрапинг задачата
+schedule.every(8).minutes.do(run_scraper_with_lock)
+
+# Стартиране на планировчика в отделна нишка
+scheduler_thread = threading.Thread(target=run_scheduler)
+scheduler_thread.daemon = True
+scheduler_thread.start()
+
+# Стартираме скрапера веднага след стартиране на планировчика
+# threading.Thread(target=run_scraper_with_lock, daemon=True).start()
+
+# Регистриране на функция за почистване при изход
+def cleanup():
+    if is_scraper_running:
+        logging.info("Изчакване на текущата скрапинг задача да приключи...")
+        scraper_lock.acquire()
+        scraper_lock.release()
+
+atexit.register(cleanup)
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/api/offers')
+def get_offers():
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+        search = request.args.get('search', '')
+        min_price = request.args.get('min_price', type=float)
+        max_price = request.args.get('max_price', type=float)
+        min_discount = request.args.get('min_discount', type=float)
+        category = request.args.get('category')
+        sort_by = request.args.get('sort_by', 'created_at')
+        sort_order = request.args.get('sort_order', 'desc')
+
+        query = Offer.query
+
+        if search and search.strip():
+            query = query.filter(Offer.title.ilike(f'%{search}%'))
+        if min_price is not None:
+            query = query.filter(Offer.price >= min_price)
+        if max_price is not None:
+            query = query.filter(Offer.price <= max_price)
+        if min_discount is not None:
+            query = query.filter(Offer.discount_percentage >= min_discount)
+        if category:
+            query = query.filter(Offer.category == category)
+
+        # Сортиране
+        if sort_by == 'price':
+            query = query.order_by(Offer.price.desc() if sort_order == 'desc' else Offer.price.asc())
+        elif sort_by == 'discount':
+            query = query.order_by(Offer.discount_percentage.desc() if sort_order == 'desc' else Offer.discount_percentage.asc())
+        else:  # created_at
+            query = query.order_by(Offer.created_at.desc() if sort_order == 'desc' else Offer.created_at.asc())
+
+        pagination = query.paginate(page=page, per_page=per_page)
+        
+        offers_data = [offer.to_dict() for offer in pagination.items]
+        logging.info(f"Върнати оферти: {len(offers_data)}")
+        for offer in offers_data:
+            logging.info(f"Оферта: {offer['title']}, Image URL: {offer.get('image_url', 'Няма URL')}")
+        
+        return jsonify({
+            'offers': offers_data,
+            'total': pagination.total,
+            'pages': pagination.pages,
+            'current_page': page
+        })
+    except Exception as e:
+        logging.error(f"Грешка при извличане на оферти: {e}")
+        return jsonify({'error': 'Възникна грешка при извличане на оферти'}), 500
+
+@app.route('/api/categories')
+def get_categories():
+    try:
+        categories = db.session.query(Offer.category).distinct().all()
+        return jsonify([category[0] for category in categories if category[0]])
+    except Exception as e:
+        logging.error(f"Грешка при извличане на категории: {e}")
+        return jsonify({'error': 'Възникна грешка при извличане на категории'}), 500
+
+if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
+    # Стартиране на първоначално търсене
+    from olx_scraper import run_scraper_job
+    run_scraper_job()
+    # Стартиране на сървъра
+    app.run(host='127.0.0.1', port=5000, debug=False) 

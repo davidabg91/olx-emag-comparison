@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+
+# База данни
+*.db
+*.sqlite3
+
+# Логове
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# Други
+.DS_Store
+Thumbs.db 
