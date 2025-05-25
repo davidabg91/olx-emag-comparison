@@ -357,21 +357,48 @@ def run_scraper_job():
     options.add_argument("--window-size=1920,1080")
     options.add_argument("--log-level=3")
     options.add_argument('--blink-settings=imagesEnabled=false')
-    # Добавяме нови опции за WebGL
     options.add_argument('--disable-software-rasterizer')
     options.add_argument('--disable-webgl')
     options.add_argument('--disable-webgl2')
+    options.add_argument('--disable-features=VizDisplayCompositor')
+    options.add_argument('--disable-features=IsolateOrigins,site-per-process')
+    options.add_argument('--disable-site-isolation-trials')
+    options.add_argument('--disable-features=NetworkService')
+    options.add_argument('--disable-features=NetworkServiceInProcess')
+    options.add_argument('--disable-features=NetworkServiceInProcess2')
+    options.add_argument('--disable-features=NetworkServiceInProcess3')
+    options.add_argument('--disable-features=NetworkServiceInProcess4')
+    options.add_argument('--disable-features=NetworkServiceInProcess5')
+    options.add_argument('--disable-features=NetworkServiceInProcess6')
+    options.add_argument('--disable-features=NetworkServiceInProcess7')
+    options.add_argument('--disable-features=NetworkServiceInProcess8')
+    options.add_argument('--disable-features=NetworkServiceInProcess9')
+    options.add_argument('--disable-features=NetworkServiceInProcess10')
+    options.add_argument('--disable-features=NetworkServiceInProcess11')
+    options.add_argument('--disable-features=NetworkServiceInProcess12')
+    options.add_argument('--disable-features=NetworkServiceInProcess13')
+    options.add_argument('--disable-features=NetworkServiceInProcess14')
+    options.add_argument('--disable-features=NetworkServiceInProcess15')
+    options.add_argument('--disable-features=NetworkServiceInProcess16')
+    options.add_argument('--disable-features=NetworkServiceInProcess17')
+    options.add_argument('--disable-features=NetworkServiceInProcess18')
+    options.add_argument('--disable-features=NetworkServiceInProcess19')
+    options.add_argument('--disable-features=NetworkServiceInProcess20')
     options.add_experimental_option('excludeSwitches', ['enable-logging'])
     driver = None
     try:
         try:
             from webdriver_manager.chrome import ChromeDriverManager
-            s = Service(ChromeDriverManager().install()); driver = webdriver.Chrome(service=s, options=options)
+            s = Service(ChromeDriverManager().install())
+            driver = webdriver.Chrome(service=s, options=options)
             logging.info("Selenium Chrome драйверът е стартиран успешно с webdriver_manager.")
         except ImportError:
-            logging.warning("webdriver_manager не е инсталиран. 'pip install webdriver-manager'. Опит за PATH.")
-            driver = webdriver.Chrome(service=Service(), options=options); logging.info("Selenium Chrome драйверът е стартиран (PATH).")
-        except Exception as e_driver: logging.critical(f"Неуспешно стартиране на Chrome драйвер: {e_driver}."); return
+            logging.warning("webdriver_manager не е инсталиран. Опит за PATH.")
+            driver = webdriver.Chrome(service=Service(), options=options)
+            logging.info("Selenium Chrome драйверът е стартиран (PATH).")
+        except Exception as e_driver:
+            logging.critical(f"Неуспешно стартиране на Chrome драйвер: {e_driver}.")
+            return
         olx_url = "https://www.olx.bg/ads/"; driver.set_page_load_timeout(PAGE_LOAD_TIMEOUT) 
         try:
             driver.get(olx_url); WebDriverWait(driver, ELEMENT_WAIT_TIMEOUT).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'div[data-cy="l-card"]')))

@@ -171,5 +171,5 @@ if __name__ == '__main__':
     scraper_thread.daemon = True
     scraper_thread.start()
     
-    # Стартиране на сървъра
-    app.run(host='127.0.0.1', port=5000, debug=False) 
+    # Стартиране на сървъра с публичен хост
+    app.run(host='0.0.0.0', port=5000, debug=False) 
