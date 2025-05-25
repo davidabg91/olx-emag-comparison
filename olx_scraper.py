@@ -474,12 +474,17 @@ def run_scraper_job():
 
                 try:
                     # Опит за извличане на локация
-                    location_element = driver.find_element(By.CSS_SELECTOR, 'div[data-cy="adPageAdLocation"]')
+                    location_element = driver.find_element(By.CSS_SELECTOR, 'p[data-testid="location-date"]')
                     if location_element:
-                        location = location_element.text.strip()
-                except: pass
+                        location_text = location_element.text.strip()
+                        # Премахваме "Обновено..." частта
+                        location = location_text.split(' - ')[0].strip()
+                        logging.info(f"Намерена локация: {location}")
+                except Exception as e:
+                    logging.debug(f"Не може да се извлече локация: {e}")
+                    location = None
 
-                logging.info(f"OLX Data: Title='{olx_title}', Price={price_olx}")
+                logging.info(f"OLX Data: Title='{olx_title}', Price={price_olx}, Location='{location}'")
                 filler_words_for_search = [
                     "продавам", "чисто", "нови", "нова", "ново", "перфектна", "перфектно", "перфектен", "състояние", "добро", "запазен", "запазена", "запазено", "спешно", "изгодно",
                     "уникален", "уникална", "уникално", "оригинален", "оригинална", "оригинално", "комплект", "както", "вижда", "снимките", "без", "забележки", "забележка",

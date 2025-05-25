@@ -150,10 +150,26 @@ def get_categories():
         return jsonify({'error': 'Възникна грешка при извличане на категории'}), 500
 
 if __name__ == '__main__':
+    def signal_handler(signum, frame):
+        logging.info("Получен сигнал за спиране. Изчакване на текущите задачи да приключат...")
+        if is_scraper_running:
+            logging.info("Изчакване на скрапинг задачата да приключи...")
+            scraper_lock.acquire()
+            scraper_lock.release()
+        logging.info("Сървърът спира...")
+        os._exit(0)
+
+    import signal
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
     with app.app_context():
         db.create_all()
-    # Стартиране на първоначално търсене
-    from olx_scraper import run_scraper_job
-    run_scraper_job()
+    
+    # Стартиране на скрапинга в отделна нишка
+    scraper_thread = threading.Thread(target=run_scraper_with_lock)
+    scraper_thread.daemon = True
+    scraper_thread.start()
+    
     # Стартиране на сървъра
     app.run(host='127.0.0.1', port=5000, debug=False) 

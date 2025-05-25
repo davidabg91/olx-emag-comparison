@@ -3,10 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OLX Сравнител</title>
+    <title>OLX vs eMAG Сравнение</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600&display=swap" rel="stylesheet">
     <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #2193b0, #6dd5ed);
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header h1 {
+            color: white;
+            font-size: 2.5em;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .header p {
+            color: rgba(255, 255, 255, 0.9);
+            margin: 10px 0 0;
+            font-size: 1.1em;
+        }
         .offer-card {
             transition: transform 0.2s;
         }
@@ -28,9 +56,59 @@
         a.bg-orange-600:hover {
             background-color: #c2410c !important;
         }
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .filters input, .filters select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .offers {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .offer-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .offer-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .pagination button {
+            padding: 8px 16px;
+            border: none;
+            background: #2193b0;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .pagination button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body class="bg-gray-100">
+    <div class="header">
+        <h1>OLX vs eMAG Сравнение</h1>
+        <p>Намерете най-добрите оферти от OLX с по-ниски цени от eMAG</p>
+    </div>
     <nav class="bg-blue-600 text-white p-4 shadow-lg">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-2xl font-bold">OLX Сравнител</h1>
@@ -43,62 +121,22 @@
     </nav>
 
     <div class="container mx-auto px-4 py-8">
-        <!-- Филтри -->
-        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Търсене</label>
-                    <input type="text" id="searchInput" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-100">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Категория</label>
-                    <select id="categorySelect" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        <option value="">Всички</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Цена</label>
-                    <div class="flex space-x-2">
-                        <input type="number" id="minPrice" placeholder="Мин" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        <input type="number" id="maxPrice" placeholder="Макс" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Мин. отстъпка</label>
-                    <input type="number" id="minDiscount" placeholder="%" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                </div>
-            </div>
-            <div class="mt-4 flex justify-between items-center">
-                <div class="flex space-x-4">
-                    <button id="applyFilters" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                        Приложи филтри
-                    </button>
-                    <button id="resetFilters" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
-                        Изчисти
-                    </button>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <label class="text-sm font-medium text-gray-700">Сортирай по:</label>
-                    <select id="sortSelect" class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        <option value="created_at">Най-нови</option>
-                        <option value="price">Цена</option>
-                        <option value="discount">Отстъпка</option>
-                    </select>
-                </div>
-            </div>
+        <div class="filters">
+            <input type="text" id="search" placeholder="Търсене...">
+            <input type="number" id="minPrice" placeholder="Мин. цена">
+            <input type="number" id="maxPrice" placeholder="Макс. цена">
+            <input type="number" id="minDiscount" placeholder="Мин. отстъпка %">
+            <select id="category">
+                <option value="">Всички категории</option>
+            </select>
+            <select id="sortBy">
+                <option value="created_at">Най-нови</option>
+                <option value="price">Цена</option>
+                <option value="discount">Отстъпка</option>
+            </select>
         </div>
-
-        <!-- Оферти -->
-        <div id="offersContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Офертите ще се зареждат тук динамично -->
-        </div>
-
-        <!-- Пагинация -->
-        <div class="mt-8 flex justify-center">
-            <div id="pagination" class="flex space-x-2">
-                <!-- Пагинацията ще се генерира динамично -->
-            </div>
-        </div>
+        <div class="offers" id="offers"></div>
+        <div class="pagination" id="pagination"></div>
 
         <!-- Loading индикатор -->
         <div id="loading" class="hidden fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center">
@@ -112,143 +150,92 @@
         let currentPage = 1;
         let totalPages = 1;
         let isLoading = false;
+        const perPage = 20;
 
-        // Функция за зареждане на офертите
         async function loadOffers(page = 1) {
             if (isLoading) return;
             isLoading = true;
             showLoading();
 
-            const search = document.getElementById('searchInput').value;
-            const category = document.getElementById('categorySelect').value;
+            const search = document.getElementById('search').value;
             const minPrice = document.getElementById('minPrice').value;
             const maxPrice = document.getElementById('maxPrice').value;
             const minDiscount = document.getElementById('minDiscount').value;
-            const sortBy = document.getElementById('sortSelect').value;
+            const category = document.getElementById('category').value;
+            const sortBy = document.getElementById('sortBy').value;
 
+            const url = `/api/offers?page=${page}&search=${search}&min_price=${minPrice}&max_price=${maxPrice}&min_discount=${minDiscount}&category=${category}&sort_by=${sortBy}`;
+            
             try {
-                const response = await fetch(`/api/offers?page=${page}&search=${search}&category=${category}&min_price=${minPrice}&max_price=${maxPrice}&min_discount=${minDiscount}&sort_by=${sortBy}`);
+                const response = await fetch(url);
                 const data = await response.json();
                 
-                renderOffers(data.offers);
-                renderPagination(data.current_page, data.pages);
-                totalPages = data.pages;
-                currentPage = data.current_page;
+                const offersDiv = document.getElementById('offers');
+                offersDiv.innerHTML = '';
+                
+                data.offers.forEach(offer => {
+                    const card = document.createElement('div');
+                    card.className = 'offer-card';
+                    card.innerHTML = `
+                        ${offer.image_url ? `<img src="${offer.image_url}" alt="${offer.title}">` : ''}
+                        <h3>${offer.title}</h3>
+                        <p>OLX: ${offer.price} лв.</p>
+                        <p>eMAG: ${offer.emag_price} лв.</p>
+                        <p>Отстъпка: ${Math.round(offer.discount_percentage)}%</p>
+                        <p>Локация: ${offer.location || 'Няма информация'}</p>
+                        <p>Категория: ${offer.category || 'Няма информация'}</p>
+                        <a href="${offer.olx_link}" target="_blank">OLX Линк</a>
+                        ${offer.emag_link ? `<a href="${offer.emag_link}" target="_blank">eMAG Линк</a>` : ''}
+                    `;
+                    offersDiv.appendChild(card);
+                });
+
+                // Пагинация
+                const paginationDiv = document.getElementById('pagination');
+                paginationDiv.innerHTML = '';
+                
+                if (data.pages > 1) {
+                    if (page > 1) {
+                        const prevButton = document.createElement('button');
+                        prevButton.textContent = 'Предишна';
+                        prevButton.onclick = () => loadOffers(page - 1);
+                        paginationDiv.appendChild(prevButton);
+                    }
+                    
+                    const pageInfo = document.createElement('span');
+                    pageInfo.textContent = `Страница ${page} от ${data.pages}`;
+                    paginationDiv.appendChild(pageInfo);
+                    
+                    if (page < data.pages) {
+                        const nextButton = document.createElement('button');
+                        nextButton.textContent = 'Следваща';
+                        nextButton.onclick = () => loadOffers(page + 1);
+                        paginationDiv.appendChild(nextButton);
+                    }
+                }
             } catch (error) {
-                console.error('Грешка при зареждане на офертите:', error);
+                console.error('Грешка при зареждане на оферти:', error);
             } finally {
                 hideLoading();
                 isLoading = false;
             }
         }
 
-        // Функция за рендериране на офертите
-        function renderOffers(offers) {
-            const container = document.getElementById('offersContainer');
-            container.innerHTML = '';
-
-            offers.forEach(offer => {
-                const card = document.createElement('div');
-                card.className = 'offer-card bg-white rounded-lg shadow-md overflow-hidden';
-                card.innerHTML = `
-                    <div class="relative">
-                        <img src="${offer.image_url || 'https://via.placeholder.com/300x200'}" 
-                             alt="${offer.title}" 
-                             class="w-full h-48 object-cover">
-                        ${offer.discount_percentage ? `
-                            <div class="absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded">
-                                -${Math.round(offer.discount_percentage)}%
-                            </div>
-                        ` : ''}
-                    </div>
-                    <div class="p-4">
-                        <h3 class="text-lg font-semibold mb-2 line-clamp-2">${offer.title}</h3>
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-gray-600">${offer.location || 'Няма локация'}</span>
-                            <span class="text-gray-500 text-sm">${new Date(offer.created_at).toLocaleDateString('bg-BG')}</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <div class="text-xl font-bold text-blue-600">${offer.price.toFixed(2)} лв.</div>
-                                ${offer.emag_price ? `
-                                    <div class="text-sm text-gray-500 line-through">eMAG: ${offer.emag_price.toFixed(2)} лв.</div>
-                                ` : ''}
-                            </div>
-                            <div class="flex space-x-2">
-                                <a href="${offer.olx_link}" target="_blank" 
-                                   class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">
-                                    OLX
-                                </a>
-                                ${offer.emag_link ? `
-                                    <a href="${offer.emag_link}" target="_blank" 
-                                       class="bg-orange-600 text-white px-3 py-1 rounded hover:bg-orange-700">
-                                        eMAG
-                                    </a>
-                                ` : ''}
-                            </div>
-                        </div>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        // Функция за рендериране на пагинацията
-        function renderPagination(currentPage, totalPages) {
-            const pagination = document.getElementById('pagination');
-            pagination.innerHTML = '';
-
-            const maxVisiblePages = 5;
-            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-
-            if (endPage - startPage + 1 < maxVisiblePages) {
-                startPage = Math.max(1, endPage - maxVisiblePages + 1);
-            }
-
-            // Бутон "Предишна"
-            if (currentPage > 1) {
-                const prevButton = document.createElement('button');
-                prevButton.className = 'px-3 py-1 rounded bg-gray-200 hover:bg-gray-300';
-                prevButton.innerHTML = '<i class="fas fa-chevron-left"></i>';
-                prevButton.onclick = () => loadOffers(currentPage - 1);
-                pagination.appendChild(prevButton);
-            }
-
-            // Номера на страниците
-            for (let i = startPage; i <= endPage; i++) {
-                const pageButton = document.createElement('button');
-                pageButton.className = `px-3 py-1 rounded ${i === currentPage ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}`;
-                pageButton.textContent = i;
-                pageButton.onclick = () => loadOffers(i);
-                pagination.appendChild(pageButton);
-            }
-
-            // Бутон "Следваща"
-            if (currentPage < totalPages) {
-                const nextButton = document.createElement('button');
-                nextButton.className = 'px-3 py-1 rounded bg-gray-200 hover:bg-gray-300';
-                nextButton.innerHTML = '<i class="fas fa-chevron-right"></i>';
-                nextButton.onclick = () => loadOffers(currentPage + 1);
-                pagination.appendChild(nextButton);
-            }
-        }
-
-        // Функция за зареждане на категориите
+        // Зареждане на категориите
         async function loadCategories() {
             try {
                 const response = await fetch('/api/categories');
                 const categories = await response.json();
-                const select = document.getElementById('categorySelect');
+                const categorySelect = document.getElementById('category');
                 
                 categories.forEach(category => {
                     const option = document.createElement('option');
                     option.value = category;
                     option.textContent = category;
-                    select.appendChild(option);
+                    categorySelect.appendChild(option);
                 });
             } catch (error) {
-                console.error('Грешка при зареждане на категориите:', error);
+                console.error('Грешка при зареждане на категории:', error);
             }
         }
 
@@ -261,19 +248,14 @@
             document.getElementById('loading').classList.add('hidden');
         }
 
-        // Event listeners
-        document.getElementById('applyFilters').addEventListener('click', () => loadOffers(1));
-        document.getElementById('resetFilters').addEventListener('click', () => {
-            document.getElementById('searchInput').value = '';
-            document.getElementById('categorySelect').value = '';
-            document.getElementById('minPrice').value = '';
-            document.getElementById('maxPrice').value = '';
-            document.getElementById('minDiscount').value = '';
-            document.getElementById('sortSelect').value = 'created_at';
-            loadOffers(1);
-        });
+        // Event listeners за филтрите
+        document.getElementById('search').addEventListener('input', () => loadOffers(1));
+        document.getElementById('minPrice').addEventListener('input', () => loadOffers(1));
+        document.getElementById('maxPrice').addEventListener('input', () => loadOffers(1));
+        document.getElementById('minDiscount').addEventListener('input', () => loadOffers(1));
+        document.getElementById('category').addEventListener('change', () => loadOffers(1));
+        document.getElementById('sortBy').addEventListener('change', () => loadOffers(1));
         document.getElementById('refreshBtn').addEventListener('click', () => loadOffers(currentPage));
-        document.getElementById('sortSelect').addEventListener('change', () => loadOffers(1));
 
         // Инициализация
         loadCategories();
