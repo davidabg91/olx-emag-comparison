@@ -3,7 +3,7 @@ services:
     name: olx-emag-comparison
     env: python
     buildCommand: |
-      apt-get update && apt-get install -y wget unzip
+      apt-get update && apt-get install -y wget unzip xvfb libxi6 libgconf-2-4
       mkdir -p /opt/chrome
       wget -q "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/114.0.5735.90/linux64/chrome-linux64.zip"
       unzip chrome-linux64.zip
@@ -15,9 +15,8 @@ services:
       mv chromedriver-linux64/chromedriver /opt/chrome/chromedriver
       chmod +x /opt/chrome/chromedriver
       rm -rf chromedriver-linux64.zip chromedriver-linux64
-      echo 'export PATH="/opt/chrome:$PATH"' >> /etc/profile
-      echo 'export PATH="/opt/chrome:$PATH"' >> ~/.bashrc
-      export PATH="/opt/chrome:$PATH"
+      ln -s /opt/chrome/chromedriver /usr/local/bin/chromedriver
+      ln -s /opt/chrome/google-chrome /usr/local/bin/google-chrome
       pip install -r requirements.txt
       echo "Проверка на Chrome:"
       /opt/chrome/google-chrome --version
@@ -32,4 +31,6 @@ services:
       - key: PYTHONUNBUFFERED
         value: "1"
       - key: PATH
-        value: "/opt/chrome:$PATH" 
+        value: "/opt/chrome:/usr/local/bin:$PATH"
+      - key: DISPLAY
+        value: ":99" 
