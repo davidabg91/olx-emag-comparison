@@ -68,59 +68,26 @@ if not os.path.exists(config_file_path):
 config.read(config_file_path)
 
 # Telegram
-TELEGRAM_BOT_TOKEN = config['TELEGRAM'].get('bot_token')
-TELEGRAM_CHAT_ID = config['TELEGRAM'].get('chat_id')
+TELEGRAM_BOT_TOKEN = None
+TELEGRAM_CHAT_ID = None
 
 # Настройки
-MIN_EMAG_PRICE = int(config['SETTINGS'].get('min_emag_price', 50))
-DISCOUNT_THRESHOLD = float(config['SETTINGS'].get('discount_threshold', 0.4))
-TITLE_SIMILARITY_THRESHOLD = int(config['SETTINGS'].get('title_similarity_threshold', 60))
-MAX_MISSING_WORDS_THRESHOLD = int(config['SETTINGS'].get('max_missing_words_threshold', 3))
-MIN_WORDS_FOR_EMAG_SEARCH = int(config['SETTINGS'].get('min_words_for_emag_search', 3))
-PAGE_LOAD_TIMEOUT = int(config['SETTINGS'].get('page_load_timeout', 30))
-ELEMENT_WAIT_TIMEOUT = int(config['SETTINGS'].get('element_wait_timeout', 20))
-SHORT_ELEMENT_WAIT = int(config['SETTINGS'].get('short_element_wait', 5))
+MIN_EMAG_PRICE = 50
+DISCOUNT_THRESHOLD = 0.4
+TITLE_SIMILARITY_THRESHOLD = 60
+MAX_MISSING_WORDS_THRESHOLD = 3
+MIN_WORDS_FOR_EMAG_SEARCH = 3
+PAGE_LOAD_TIMEOUT = 30
+ELEMENT_WAIT_TIMEOUT = 20
+SHORT_ELEMENT_WAIT = 5
 
 # Google AI
-GOOGLE_AI_API_KEY = config['GOOGLE_AI'].get('API_KEY')
-
-if not TELEGRAM_BOT_TOKEN or TELEGRAM_BOT_TOKEN == 'YOUR_TELEGRAM_BOT_TOKEN' or \
-   not TELEGRAM_CHAT_ID or TELEGRAM_CHAT_ID == 'YOUR_TELEGRAM_CHAT_ID':
-    logging.critical(f"Моля, попълнете 'bot_token' и 'chat_id' във файла '{config_file_path}'!")
-    # exit()
-
-if GOOGLE_AI_API_KEY and GOOGLE_AI_API_KEY != 'YOUR_GOOGLE_AI_API_KEY_HERE':
-    try:
-        genai.configure(api_key=GOOGLE_AI_API_KEY)
-        logging.info("Google AI API ключ е успешно конфигуриран.")
-    except Exception as e_ai_config:
-        logging.error(f"Грешка при конфигуриране на Google AI API ключ: {e_ai_config}")
-        GOOGLE_AI_API_KEY = None 
-else:
-    logging.warning("Google AI API ключ не е намерен или е примерен в config.ini. AI проверката ще бъде пропусната.")
-    GOOGLE_AI_API_KEY = None
-
-USER_AGENTS = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/114.0",
-]
+GOOGLE_AI_API_KEY = None
 
 # --- ТЕЛЕГРАМ ---
 def send_telegram_message(text):
-    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID or TELEGRAM_BOT_TOKEN == 'YOUR_TELEGRAM_BOT_TOKEN':
-        logging.warning("Telegram bot_token или chat_id не са конфигурирани. Съобщението няма да бъде изпратено.")
-        return False
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-    data = {"chat_id": TELEGRAM_CHAT_ID, "text": text, "parse_mode": "HTML"}
-    try:
-        response = requests.post(url, data=data, timeout=10)
-        response.raise_for_status()
-        logging.info(f"Съобщението е изпратено до Telegram: {text[:50]}...")
-        return response.ok
-    except requests.exceptions.RequestException as e:
-        logging.error(f"Грешка при изпращане на Telegram съобщение: {e}")
-        return False
+    logging.info(f"Telegram съобщение (не е изпратено): {text[:50]}...")
+    return True
 
 # --- ПОМОЩНИ ФУНКЦИИ ---
 def calculate_fuzzy_similarity(text1, text2):
@@ -164,76 +131,9 @@ def get_words_from_title(title):
 # --- AI ПРОВЕРКА ---
 def are_products_a_match_ai(olx_title_for_ai, emag_title_for_ai):
     """
-    Използва Google AI за да прецени дали две заглавия описват един и същ продукт.
-    OLX заглавието, което се подава тук, е вече почистеното за търсене.
+    Опростена версия без AI проверка
     """
-    if not GOOGLE_AI_API_KEY: 
-        logging.debug("Google AI API ключ не е наличен. Пропускане на AI продуктово сравнение, приемаме за съвпадение.")
-        return True 
-
-    if not emag_title_for_ai or emag_title_for_ai == "Няма заглавие в eMAG":
-        logging.warning("eMAG заглавието е празно или невалидно за AI сравнение. Приемаме за несъвпадение.")
-        return False
-
-    try:
-        model = genai.GenerativeModel('gemini-1.5-flash-latest') 
-        prompt = f"""
-        Инструкция: Имаш две заглавия на продукти. Първото е от OLX (вече леко почистено от общи думи), а второто е от eMAG. 
-        Трябва да прецениш дали те описват един и същ ТИП продукт и МОДЕЛ, или много близък еквивалент, подходящ за сравнение на цени. 
-        Бъди МНОГО СТРИКТЕН. Ако OLX заглавието е твърде общо (напр. само "Марка + Тип продукт") и не съдържа специфичен модел/линия/артикулен номер, който присъства в eMAG заглавието, тогава отговори с "НЕ".
-        Фокусирай се върху ключовите характеристики: МАРКА, МОДЕЛ, ТИП НА ПРОДУКТА (напр. телефон, телевизор, маратонки, шенкел, компресор, калъф, зарядно), основни спецификации (напр. конкретен номер на част, ако има). 
-        Игнорирай малки разлики като цвят (освен ако не е ключов за модела), състояние (нов/използван), информация за гаранция или доставка, освен ако не променят фундаментално продукта.
-
-        Примери за СЪВПАДЕНИЕ (отговори с "ДА"):
-        - OLX: "Apple iPhone 15 Pro 256GB син" | eMAG: "Смартфон Apple iPhone 15 Pro, 256GB, Blue Titanium" (ТИП: Смартфон, Марка: Apple, Модел: iPhone 15 Pro)
-        - OLX: "Телевизор Samsung QE55Q80A" | eMAG: "Телевизор Samsung 55 инча QE55Q80A QLED 4K UHD Smart TV" (ТИП: Телевизор, Марка: Samsung, Модел: QE55Q80A)
-        - OLX: "Маратонки Nike Pegasus 39 43" | eMAG: "Мъжки маратонки за бягане Nike Air Zoom Pegasus 39, Размер 43, Черни" (ТИП: Маратонки, Марка: Nike, Модел: Pegasus 39)
-        - OLX: "Samsung Galaxy S23 Ultra 512GB Green" | eMAG: "Мобилен телефон Samsung Galaxy S23 Ultra, Dual SIM, 12GB RAM, 512GB, 5G, Phantom Black" (ТИП: Телефон, Марка: Samsung, Модел: S23 Ultra. Цветът е различен, но основният продукт е същият)
-        - OLX: "Bosch Акумулаторен винтоверт GSR 12V-15" | eMAG: "Акумулаторен винтоверт Bosch Professional GSR 12V-15, 2 батерии x 2.0 Ah, зарядно, куфар" (ТИП: Винтоверт, Марка: Bosch, Модел: GSR 12V-15)
-
-        Примери за НЕСЪВПАДЕНИЕ (отговори с "НЕ"):
-        - OLX: "Шенкел Мерцедес ML-W164" | eMAG: "Въздушен компресор за Мерцедес Ml / Gl W164" (ТИП: Шенкел срещу ТИП: Компресор. Различни авточасти, въпреки че са за същия модел кола)
-        - OLX: "iPhone 13" | eMAG: "Калъф за iPhone 13" (ТИП: Телефон срещу ТИП: Калъф. Продукт срещу аксесоар)
-        - OLX: "Samsung Galaxy S22" | eMAG: "Samsung Galaxy S22 Ultra" (Различни под-модели от една серия. "Ultra" е значима разлика.)
-        - OLX: "Маратонки Nike" | eMAG: "Тениска Nike" (ТИП: Маратонки срещу ТИП: Тениска. Различни типове продукти от една марка)
-        - OLX: "Лаптоп Dell XPS 15" | eMAG: "Зарядно за лаптоп Dell XPS 15" (ТИП: Лаптоп срещу ТИП: Зарядно. Продукт срещу аксесоар)
-        - OLX: "Слушалки Sony WH-1000XM4" | eMAG: "Слушалки Sony WH-1000XM5" (Различни поколения/модели, които се считат за различни продукти)
-        - OLX: "Проходилка Leo Lorelli" | eMAG: "Проходилка Ricokids" (ТИП: Проходилка, но Марка: Lorelli срещу Марка: Ricokids. Различни марки)
-        - OLX: "Дамски дънки Replay" | eMAG: "Дамски дънки Replay Luz Е-183836273 10-44" (ТИП: Дънки, Марка: Replay, но OLX е твърде общо и не споменава конкретния модел/линия "Luz" или артикулния номер, които присъстват в eMAG. Това е НЕСЪВПАДЕНИЕ.)
-        - OLX: "Мъжки панталон" | eMAG: "Мъжки панталон Adidas" (OLX е твърде общо, за да се каже, че е същият като конкретния в eMAG, освен ако eMAG също не е много общ)
-        
-        Ключов въпрос: Дали потребител, търсещ продукта от OLX, би бил доволен да му се предложи продукта от eMAG като директен еквивалент или много близка алтернатива по отношение на ОСНОВНИЯ ПРОДУКТ и неговия МОДЕЛ/ТИП? Ако OLX заглавието е значително по-малко специфично от eMAG заглавието по отношение на модела/линията, отговорът е "НЕ". Ако са фундаментално различни неща, отговорът е "НЕ".
-
-        Твоята задача е да отговориш само с една дума: "ДА" или "НЕ".
-
-        OLX Заглавие (почистено): "{olx_title_for_ai}"
-        eMAG Заглавие: "{emag_title_for_ai}"
-        Отговор:
-        """
-        
-        logging.info(f"AI Сравнение: OLX='{olx_title_for_ai}' vs eMAG='{emag_title_for_ai}'")
-        response = model.generate_content(prompt)
-        
-        if not response.parts:
-            safety_feedback = response.prompt_feedback if hasattr(response, 'prompt_feedback') else None
-            safety_ratings_str = str(safety_feedback.safety_ratings) if safety_feedback and hasattr(safety_feedback, 'safety_ratings') else "N/A"
-            logging.warning(f"AI не върна части в отговора за сравнение. Prompt Feedback: {safety_ratings_str}. Приемаме за съвпадение.")
-            return True 
-
-        ai_response_text = response.text.strip().upper()
-        logging.info(f"Отговор от AI за сравнението: {ai_response_text}")
-
-        if ai_response_text == "ДА":
-            return True
-        elif ai_response_text == "НЕ":
-            return False
-        else:
-            logging.warning(f"Неочакван отговор от AI за сравнение: '{response.text}'. Ще се приеме за съвпадение по подразбиране.")
-            return True 
-    except Exception as e:
-        logging.error(f"Грешка при извикване на Google AI API за сравнение: {e}")
-        return True 
-
+    return True
 
 # --- eMAG ТЪРСЕНЕ ---
 def get_emag_data(query):

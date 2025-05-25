@@ -67,18 +67,18 @@ def run_scheduler():
             time.sleep(5)  # Пауза при грешка
 
 # Планиране на скрапинг задачата
-schedule.every(15).minutes.do(run_scraper_with_lock)
+schedule.every(5).minutes.do(run_scraper_with_lock)
 
 # Добавяме keep-alive функционалност
 def keep_alive():
     while True:
         try:
-            requests.get("https://olx-emag-comparison.onrender.com/")
-            logging.info("Keep-alive request sent")
-            time.sleep(300)  # 5 минути
+            response = requests.get("https://olx-emag-comparison.onrender.com/")
+            logging.info(f"Keep-alive request sent. Status: {response.status_code}")
+            time.sleep(60)  # 1 минута
         except Exception as e:
             logging.error(f"Keep-alive request failed: {e}")
-            time.sleep(60)  # 1 минута при грешка
+            time.sleep(30)  # 30 секунди при грешка
 
 # Стартиране на keep-alive в отделна нишка
 keep_alive_thread = threading.Thread(target=keep_alive)
@@ -91,7 +91,7 @@ scheduler_thread.daemon = True
 scheduler_thread.start()
 
 # Стартираме скрапера веднага след стартиране на планировчика
-# threading.Thread(target=run_scraper_with_lock, daemon=True).start()
+threading.Thread(target=run_scraper_with_lock, daemon=True).start()
 
 # Регистриране на функция за почистване при изход
 def cleanup():
